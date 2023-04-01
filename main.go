@@ -6,7 +6,10 @@ import (
 )
 
 func main() {
-     fmt.Println("Hello, world!")
-    fmt.Println(conv.FToC(212)) // should print 100
+	f := conv.Fahrenheit(68)
+	c := conv.Celsius(20)
+	fmt.Printf("%s = %s, %s = %s\n", f, conv.FToC(f), c, conv.CToF(c))
+}
+
 
 }
