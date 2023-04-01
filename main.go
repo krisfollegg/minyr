@@ -7,4 +7,6 @@ import (
 
 func main() {
      fmt.Println("Hello, world!")
+    fmt.Println(conv.FToC(212)) // should print 100
+
 }
