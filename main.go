@@ -7,7 +7,7 @@ import (
     "os"
     "strconv"
     "strings"
-    "github.com/krisfollegg/funtemps/conv"
+    "github.com/krisfollegg/minyr/funtemps/conv"
 )
 const (
     inputFileName  = "kjevik-temp-celsius-20220318-20230318.csv"
