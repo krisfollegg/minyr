@@ -3,16 +3,18 @@ package main
 import (
     "bufio"
     "fmt"
-	"log"
+    "github.com/krisfollegg/funtemps/conv"
     "os"
     "strconv"
     "strings"
-    "github.com/krisfollegg/funtemps/conv"
 )
+
 const (
     inputFileName  = "kjevik-temp-celsius-20220318-20230318.csv"
-    outputFileName = "kjevik-tempfahr-20220318-20230318.csv"
+    outputFileName = "kjevik-temp-fahr-20220318-20230318.csv"
+    lastLine       = "Data er gyldig per 18.03.2023 (CC BY 4.0), Meteorologisk institutt (MET); endringen er gjort av Kristian Åkre Follegg"
 )
+
 func main() {
     reader := bufio.NewReader(os.Stdin)
     fmt.Println("Welcome to the Minyr program!")
@@ -25,36 +27,53 @@ func main() {
         option = strings.TrimSpace(option)
         switch option {
         case "1":
-            convertCelsiusToFahrenheit()
+            fmt.Println("Do you want to generate the output file? (j/n)")
+            genOutput, _ := reader.ReadString('\n')
+            genOutput = strings.TrimSpace(genOutput)
+            if genOutput == "j" {
+                convertCelsiusToFahrenheit(true)
+            } else if genOutput == "n" {
+                convertCelsiusToFahrenheit(false)
+            } else {
+                fmt.Println("Invalid option, please try again.")
+            }
         case "2":
-            calculateAverageTemperature()
+            fmt.Println("Calculate average temperature in Celsius or Fahrenheit? (c/f)")
+            avgType, _ := reader.ReadString('\n')
+            calculateAverageTemperature(strings.TrimSpace(avgType))
         case "3":
-            fmt.Println("Goodbye!")
+            fmt.Println("Exiting...")
             return
         default:
             fmt.Println("Invalid option, please try again.")
         }
     }
 }
-func convertCelsiusToFahrenheit() {
+
+func convertCelsiusToFahrenheit(genOutput bool) {
     fmt.Println("Converting Celsius to Fahrenheit...")
     inputFile, err := os.Open(inputFileName)
     if err != nil {
-		log.Fatal(err)
+        fmt.Println("Error opening input file:", err)
         return
     }
     defer inputFile.Close()
-    outputFile, err := os.Create(outputFileName)
-    if err != nil {
-		log.Fatal(err)
-        return
+    var outputFile *os.File
+    if genOutput {
+        outputFile, err = os.Create(outputFileName)
+        if err != nil {
+            fmt.Println("Error creating output file:", err)
+            return
+        }
+        defer outputFile.Close()
     }
-    defer outputFile.Close()
     scanner := bufio.NewScanner(inputFile)
     writer := bufio.NewWriter(outputFile)
     // First line is header, copy as is
     if scanner.Scan() {
-        writer.WriteString(scanner.Text() + "\n")
+        if genOutput {
+            writer.WriteString(scanner.Text() + "\n")
+        }
     }
     for scanner.Scan() {
         line := scanner.Text()
@@ -65,53 +84,79 @@ func convertCelsiusToFahrenheit() {
         }
         tempCelsius, err := strconv.ParseFloat(fields[3], 64)
         if err != nil {
-			log.Fatal(err)
+            fmt.Println("Error parsing temperature:", err)
             continue
         }
         tempFahrenheit := conv.CelsiusToFahrenheit(tempCelsius)
         fields[3] = strconv.FormatFloat(tempFahrenheit, 'f', 1, 64)
-        writer.WriteString(strings.Join(fields, ";") + "\n")
+        if genOutput {
+            writer.WriteString(strings.Join(fields, ";") + "\n")
+        }
     }
-    writer.Flush()
-    fmt.Println("Conversion complete. Results saved in", outputFileName)
+    if genOutput {
+        // Write last line to output file
+        writer.WriteString(lastLine + "\n")
+        writer.Flush()
+        fmt.Println("Conversion complete. Results saved in", outputFileName)
+    } else {
+        fmt.Println("Conversion skipped.")
+    }
 }
-func calculateAverageTemperature() {
+
+func calculateAverageTemperature(avgType string) {
     fmt.Println("Calculating average temperature...")
     inputFile, err := os.Open(inputFileName)
     if err != nil {
-		log.Fatal(err)
+        fmt.Println("Error opening input file:", err)
         return
     }
     defer inputFile.Close()
     scanner := bufio.NewScanner(inputFile)
-    // First line is header, ignore
-    scanner.Scan()
-    var sumC float64
-    var sumF float64
-    count := 0
+    var sum float64
+    var count int
     for scanner.Scan() {
         line := scanner.Text()
+        if strings.Contains(line, "Lufttemperatur") {
+            // Skip header line
+            continue
+        }
         fields := strings.Split(line, ";")
         if len(fields) != 4 {
             fmt.Println("Invalid line:", line)
             continue
         }
-        tempCelsius, err := strconv.ParseFloat(fields[3], 64)
+        var temp float64
+        var err error
+        if avgType == "c" {
+            temp, err = strconv.ParseFloat(fields[3], 64)
+        } else if avgType == "f" {
+            // Convert Celsius to Fahrenheit
+            celsius, err := strconv.ParseFloat(fields[3], 64)
+            if err != nil {
+                fmt.Println("Error parsing temperature:", err)
+                continue
+            }
+            temp = celsius*9/5 + 32
+        } else {
+            fmt.Println("Invalid average type")
+            return
+        }
         if err != nil {
-			log.Fatal(err)
+            fmt.Println("Error parsing temperature:", err)
             continue
         }
-        sumC += tempCelsius
-        sumF += conv.CelsiusToFahrenheit(tempCelsius)
+        sum += temp
         count++
     }
     if count == 0 {
-        fmt.Println("No valid temperature data found.")
+        fmt.Println("No data found")
         return
     }
-    avgCelsius := sumC / float64(count)
-    avgFahrenheit := sumF / float64(count)
-    fmt.Printf("Average temperature over %d days:\n", count)
-    fmt.Printf("  Celsius:    %.1f\n", avgCelsius)
-    fmt.Printf("  Fahrenheit: %.1f\n", avgFahrenheit)
+    avg := sum / float64(count)
+    if avgType == "c" {
+        fmt.Printf("Average temperature in Celsius: %.2f\n", avg)
+    } else if avgType == "f" {
+        fmt.Printf("Average temperature in Fahrenheit: %.2f\n", avg)
+    }
 }
+
