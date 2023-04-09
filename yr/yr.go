@@ -11,26 +11,25 @@ import (
 const (
     celsiusToFarh = 1.8
 )
-// ConvertTemperatures converts all temperature values from Celsius to Fahrenheit
-// and saves the results in a new file named "kjevik-tempfahr-20220318-20230318.csv"
+// Konverterer temperaturer fra Celcius til fahrenheit og lagrer resultatet i en ny fil
 
 func ConvertTemperatures() error {
-    // Open the input file
+    // Åpner input filen
     f, err := os.Open("kjevik-temp-celsius-20220318-20230318.csv")
     if err != nil {
         return fmt.Errorf("failed to open input file: %w", err)
     }
     defer f.Close()
-    // Create the output file
+    // Lager output filen
     out, err := os.Create("kjevik-temp-fahr-20220318-20230318.csv")
     if err != nil {
         return fmt.Errorf("failed to create output file: %w", err)
     }
     defer out.Close()
-    // Create a CSV reader and writer for the input and output files
+    // Lager en CSV reader og writer for input og output filene
     r := csv.NewReader(f)
     w := csv.NewWriter(out)
-    // Read the header row and write it to the output file
+    // Leser header raden og skriver det til output filen
     header, err := r.Read()
     if err != nil {
         return fmt.Errorf("failed to read header row: %w", err)
@@ -38,8 +37,7 @@ func ConvertTemperatures() error {
     if err := w.Write(header); err != nil {
         return fmt.Errorf("failed to write header row: %w", err)
     }
-    // Read the rest of the rows, convert the temperature values,
-    // and write the new rows to the output file
+    // Leser resten av radene, konvertere temperaturene og skriver nye rader til output filen
     for {
         row, err := r.Read()
         if err == io.EOF {
