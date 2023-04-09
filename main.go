@@ -94,7 +94,6 @@ func convertCelsiusToFahrenheit(genOutput bool) {
         }
     }
     if genOutput {
-        // Write last line to output file
         writer.WriteString(lastLine + "\n")
         writer.Flush()
         fmt.Println("Conversion complete. Results saved in", outputFileName)
@@ -117,7 +116,6 @@ func calculateAverageTemperature(avgType string) {
     for scanner.Scan() {
         line := scanner.Text()
         if strings.Contains(line, "Lufttemperatur") {
-            // Skip header line
             continue
         }
         fields := strings.Split(line, ";")
@@ -130,7 +128,6 @@ func calculateAverageTemperature(avgType string) {
         if avgType == "c" {
             temp, err = strconv.ParseFloat(fields[3], 64)
         } else if avgType == "f" {
-            // Convert Celsius to Fahrenheit
             celsius, err := strconv.ParseFloat(fields[3], 64)
             if err != nil {
                 fmt.Println("Error parsing temperature:", err)
