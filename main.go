@@ -3,7 +3,7 @@ package main
 import (
     "bufio"
     "fmt"
-    "github.com/krisfollegg/funtemps/conv"
+    "github.com/krisfollegg/minyr/funtemps/conv"
     "os"
     "strconv"
     "strings"
